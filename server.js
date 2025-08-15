@@ -99,20 +99,8 @@ app.use('*', (req, res) => {
     res.status(404).json({ error: 'Endpoint not found' });
 });
 
-// Graceful shutdown handling
-process.on('SIGTERM', async () => {
-    console.log('SIGTERM received, shutting down gracefully');
-    server.close(() => {
-        console.log('Process terminated');
-    });
-});
-
-process.on('SIGINT', async () => {
-    console.log('SIGINT received, shutting down gracefully');
-    server.close(() => {
-        console.log('Process terminated');
-    });
-});
+// Initialize server variable
+let server;
 
 // Start server
 async function startServer() {
@@ -130,7 +118,7 @@ async function startServer() {
         }, 5 * 60 * 1000);
 
         // Start HTTP server
-        const server = app.listen(PORT, () => {
+        server = app.listen(PORT, () => {
             console.log(`Terminal Terrors Backend running on port ${PORT}`);
             console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
             console.log(`Health check: http://localhost:${PORT}/health`);
@@ -145,6 +133,25 @@ async function startServer() {
 }
 
 // Start the server
-const server = startServer();
+startServer();
+
+// Graceful shutdown handling
+process.on('SIGTERM', async () => {
+    console.log('SIGTERM received, shutting down gracefully');
+    if (server) {
+        server.close(() => {
+            console.log('Process terminated');
+        });
+    }
+});
+
+process.on('SIGINT', async () => {
+    console.log('SIGINT received, shutting down gracefully');
+    if (server) {
+        server.close(() => {
+            console.log('Process terminated');
+        });
+    }
+});
 
 module.exports = app;
